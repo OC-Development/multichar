@@ -1,129 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-        <link href="reset.css" rel="stylesheet" />
-        <link href="style.css" rel="stylesheet" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-        <title>QB-Multicharacter</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.1.3/axios.min.js"></script>
-        <script src="vue.js"></script>
-        <script src="swal2.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
-        <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet" />
-    </head>
-    <body>
-        <v-app data-app>
-            <div id="app">
-                <div class="container">
-                    <div class="main-screen">
-                        <!-- Loading Screen -->
-                        <transition name="fade">
-                            <div class="welcomescreen" v-if="show.loading">
-                                <div class="loading-container">
-                                    <div class="loading-circle">
-                                        <div></div>
-                                        <div></div>
-                                        <div></div>
-                                        <div></div>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modern Character Selection</title>
+    <link href="reset.css" rel="stylesheet" />
+    <link href="style.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.1.3/axios.min.js"></script>
+    <script src="vue.js"></script>
+    <script src="swal2.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <!-- Loading Screen -->
+            <div v-if="show.loading" class="loading-screen">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">{{ loadingText }}</div>
+            </div>
+
+            <!-- Character Selection -->
+            <div v-if="show.characters" class="character-selection-container">
+                <div v-for="index in characterAmount" 
+                     :key="index" 
+                     class="character-square"
+                     :class="{'character-selected': selectedCharacter == index}"
+                     @click="click_character(index, characters[index] ? 'existing' : 'empty')">
+                    
+                    <template v-if="characters[index]">
+                        <div class="character-info">
+                            <div>
+                                <h2 class="character-name">
+                                    {{characters[index].charinfo.firstname}} {{characters[index].charinfo.lastname}}
+                                </h2>
+                                <div class="character-stats">
+                                    <div class="stat-row">
+                                        <span class="material-symbols-outlined">work</span>
+                                        <span>{{characters[index].job.label}}</span>
                                     </div>
-                                    <p>{{loadingText}}</p>
+                                    <div class="stat-row">
+                                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                                        <span>${{dollar.format(characters[index].money.cash)}}</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span class="material-symbols-outlined">account_balance</span>
+                                        <span>${{dollar.format(characters[index].money.bank)}}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </transition>
-
-                        <!-- Character Selection Container -->
-                        <div class="character-selection-container" v-if="show.characters">
-                            <div v-for="index in characterAmount" :key="index" class="character-square" :class="{'character-selected': selectedCharacter == index}" @click="click_character(index, characters[index] ? 'existing' : 'empty')">
-                                <!-- For character slots with data -->
-                                <template v-if="characters[index]">
-                                    <!-- Top section - Action buttons -->
-                                    <div class="character-actions">
-                                        <div class="action-btn play-btn" @click.stop="play_character">
-                                            <span class="material-symbols-outlined">play_circle</span>
-                                        </div>
-                                        <div v-if="allowDelete" class="action-btn delete-btn" @click.stop="prepareDelete">
-                                            <span class="material-symbols-outlined">delete</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Middle section - Character stats -->
-                                    <div class="character-stats">
-                                        <div class="stat-row">
-                                            <span class="material-symbols-outlined">badge</span>
-                                            <span class="stat-value">{{characters[index].job.label}}</span>
-                                        </div>
-                                        <div class="stat-row">
-                                            <span class="material-symbols-outlined">payments</span>
-                                            <span class="stat-value">${{dollar.format(characters[index].money.cash)}}</span>
-                                        </div>
-                                        <div class="stat-row">
-                                            <span class="material-symbols-outlined">wallet</span>
-                                            <span class="stat-value">${{dollar.format(characters[index].money.bank)}}</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Bottom section - Character name -->
-                                    <div class="character-name-container">
-                                        <div class="character-name">{{characters[index].charinfo.firstname}} {{characters[index].charinfo.lastname}}</div>
-                                    </div>
-                                </template>
-
-                                <!-- For empty slots -->
-                                <template v-else>
-                                    <div class="empty-slot" @click.stop="selectedCharacter = index; resetRegisterData(); show.characters = false; show.register = true;">+</div>
-                                </template>
+                            <div class="character-actions">
+                                <button class="action-btn play-btn" @click.stop="play_character">
+                                    <span class="material-symbols-outlined">play_arrow</span>
+                                    Play
+                                </button>
+                                <button v-if="allowDelete" class="action-btn delete-btn" @click.stop="prepareDelete">
+                                    <span class="material-symbols-outlined">delete</span>
+                                    Delete
+                                </button>
                             </div>
                         </div>
-
-                        <!-- Character Delete Confirmation -->
-                        <transition name="fade">
-                            <div class="character-delete" v-if="show.delete">
-                                <p>{{translate('deletechar_description')}}</p>
-                                <div class="character-delete-btns">
-                                    <v-btn class="confirm-btn" v-ripple @click="delete_character">{{translate('confirm')}}</v-btn>
-                                    <v-btn class="cancel-btn" v-ripple @click="cancelDelete">{{translate('cancel')}}</v-btn>
-                                </div>
-                            </div>
-                        </transition>
-
-                        <!-- Character Creation Form -->
-                        <transition name="fade">
-                            <div class="character-register" v-if="show.register">
-                                <div>
-                                    <p class="characters-register-block-header">{{translate('chardel_header')}}</p>
-                                    <span class="material-symbols-outlined" id="close-reg" @click="cancelCreate">close</span>
-                                </div>
-                                <div class="char-register-inputs">
-                                    <v-text-field :placeholder="translate('firstname')" solo hide-details="auto" v-model="registerData.firstname"></v-text-field>
-                                    <v-text-field :placeholder="translate('lastname')" solo hide-details="auto" v-model="registerData.lastname"></v-text-field>
-                                    <v-text-field v-if="customNationality" :placeholder="translate('nationality')" solo hide-details="auto" v-model="registerData.nationality"></v-text-field>
-                                    <v-select v-else solo :placeholder="translate('nationality')" :items="nationalities" hide-details="auto" v-ripple v-model="registerData.nationality"></v-select>
-                                    <v-select solo :placeholder="translate('gender')" :items="[translate('male'), translate('female')]" hide-details="auto" v-ripple v-model="registerData.gender"></v-select>
-                                    <v-dialog ref="dialog" v-model="dataPickerMenu" :return-value.sync="registerData.date" persistent width="290px">
-                                        <template v-slot:activator="{ on, attrs }">
-                                            <v-text-field v-model="registerData.date" :label="translate('birthdate')" readonly v-bind="attrs" v-on="on" solo></v-text-field>
-                                        </template>
-                                        <v-date-picker v-model="registerData.date" min="1900-01-01" max="2100-12-31">
-                                            <v-spacer></v-spacer>
-                                            <v-btn text class="date-cancel-btn" @click="dataPickerMenu = false">{{translate('cancel')}}</v-btn>
-                                            <v-btn text class="date-confirm-btn" @click="$refs.dialog.save(registerData.date)">{{translate('confirm')}}</v-btn>
-                                        </v-date-picker>
-                                    </v-dialog>
-                                </div>
-                                <v-btn class="character-reg-btn" v-ripple @click="create_character" large>{{translate('create_button')}}</v-btn>
-                            </div>
-                        </transition>
-                    </div>
+                    </template>
+                    
+                    <template v-else>
+                        <div class="empty-slot">
+                            <span class="material-symbols-outlined">add</span>
+                        </div>
+                    </template>
                 </div>
             </div>
-        </v-app>
 
-        <script type="text/javascript" src="profanity.js"></script>
-        <script type="text/javascript" src="validation.js"></script>
-        <script type="text/javascript" src="translations.js"></script>
-        <script type="text/javascript" src="app.js"></script>
-    </body>
+            <!-- Character Registration -->
+            <div v-if="show.register" class="character-register">
+                <div class="register-header">
+                    <h2 class="register-title">Create New Character</h2>
+                    <span class="material-symbols-outlined close-btn" @click="cancelCreate">close</span>
+                </div>
+                
+                <div class="register-form">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input type="text" v-model="registerData.firstname" class="form-input" :placeholder="translate('firstname')" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" v-model="registerData.lastname" class="form-input" :placeholder="translate('lastname')" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nationality</label>
+                        <input v-if="customNationality" type="text" v-model="registerData.nationality" class="form-input" :placeholder="translate('nationality')" />
+                        <select v-else v-model="registerData.nationality" class="form-input">
+                            <option v-for="nation in nationalities" :value="nation">{{nation}}</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Gender</label>
+                        <select v-model="registerData.gender" class="form-input">
+                            <option :value="translate('male')">{{translate('male')}}</option>
+                            <option :value="translate('female')">{{translate('female')}}</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth</label>
+                        <input type="date" v-model="registerData.date" class="form-input" />
+                    </div>
+                    
+                    <button class="submit-btn" @click="create_character">
+                        Create Character
+                    </button>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation -->
+            <div v-if="show.delete" class="character-register">
+                <div class="register-header">
+                    <h2 class="register-title">Delete Character</h2>
+                    <span class="material-symbols-outlined close-btn" @click="cancelDelete">close</span>
+                </div>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    {{translate('deletechar_description')}}
+                </p>
+                
+                <div class="character-actions">
+                    <button class="action-btn delete-btn" @click="delete_character">
+                        Confirm Delete
+                    </button>
+                    <button class="action-btn" @click="cancelDelete" style="background: var(--surface-light);">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="profanity.js"></script>
+    <script src="validation.js"></script>
+    <script src="translations.js"></script>
+    <script src="app.js"></script>
+</body>
 </html>

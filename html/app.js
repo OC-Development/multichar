@@ -4,7 +4,6 @@ const regTest = new RegExp(re, "i");
 document.addEventListener("DOMContentLoaded", () => {
     const viewmodel = new Vue({
         el: "#app",
-        vuetify: new Vuetify({ theme: { dark: true } }),
         data: {
             characters: [],
             chardata: {},
@@ -38,10 +37,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (this.characters[idx] !== undefined) {
                     axios.post("https://qb-multicharacter/cDataPed", {
                         cData: this.characters[idx],
+                    }).catch(() => {
+                        console.log("Preview mode: Character data updated");
                     });
                 } else {
-                    axios.post("https://qb-multicharacter/cDataPed", {});
-                    // For empty slots, immediately show the registration form
+                    axios.post("https://qb-multicharacter/cDataPed", {}).catch(() => {
+                        console.log("Preview mode: Empty slot selected");
+                    });
                     if (type === "empty") {
                         this.resetRegisterData();
                         this.show.characters = false;
@@ -66,6 +68,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     this.show.delete = false;
                     axios.post("https://qb-multicharacter/removeCharacter", {
                         citizenid: this.characters[this.selectedCharacter].citizenid,
+                    }).catch(() => {
+                        console.log("Preview mode: Character deleted");
+                        delete this.characters[this.selectedCharacter];
                     });
                     setTimeout(() => {
                         this.show.characters = true;
@@ -79,6 +84,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (data !== undefined) {
                         axios.post("https://qb-multicharacter/selectCharacter", {
                             cData: data,
+                        }).catch(() => {
+                            console.log("Preview mode: Character selected");
                         });
                         setTimeout(() => {
                             this.show.characters = false;
@@ -114,6 +121,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (validationResult.isValid) {
                     this.show.register = false;
 
+                    // In preview mode, create a new character locally
+                    const newCharacter = {
+                        charinfo: {
+                            firstname: registerData.firstname,
+                            lastname: registerData.lastname,
+                            nationality: registerData.nationality,
+                            birthdate: registerData.date,
+                            gender: registerData.gender,
+                        },
+                        job: {
+                            label: "Unemployed"
+                        },
+                        money: {
+                            cash: 500,
+                            bank: 5000
+                        }
+                    };
+
+                    this.characters[this.selectedCharacter] = newCharacter;
+
                     axios.post("https://qb-multicharacter/createNewCharacter", {
                         firstname: registerData.firstname,
                         lastname: registerData.lastname,
@@ -121,10 +148,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         birthdate: registerData.date,
                         gender: registerData.gender,
                         cid: this.selectedCharacter,
+                    }).catch(() => {
+                        console.log("Preview mode: Character created");
                     });
 
                     setTimeout(() => {
-                        this.show.characters = false;
+                        this.show.characters = true;
                     }, 500);
                 } else {
                     Swal.fire({
@@ -185,14 +214,18 @@ document.addEventListener("DOMContentLoaded", () => {
                             }, 500);
 
                             setTimeout(() => {
-                                axios.post("https://qb-multicharacter/setupCharacters");
+                                axios.post("https://qb-multicharacter/setupCharacters").catch(() => {
+                                    console.log("Preview mode: Setting up characters");
+                                });
                                 setTimeout(() => {
                                     clearInterval(DotsInterval);
                                     loadingProgress = 0;
                                     this.loadingText = this.translate("retrieving_playerdata");
                                     this.show.loading = false;
                                     this.show.characters = true;
-                                    axios.post("https://qb-multicharacter/removeBlur");
+                                    axios.post("https://qb-multicharacter/removeBlur").catch(() => {
+                                        console.log("Preview mode: Blur removed");
+                                    });
                                 }, 2000);
                             }, 2000);
                         }
